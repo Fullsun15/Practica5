@@ -1,6 +1,12 @@
 <?php
-include('conexion.php');
+session_start();
 
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+include('conexion.php');
 function agregarMecanico($cedula, $nombre, $apellido, $edad, $licencia, $especialidad) {
     global $conn;
     $stmt = $conn->prepare("INSERT INTO mecanicos_icarplus (cedula, nombre, apellido, edad, licencia, especialidad) VALUES (?, ?, ?, ?, ?, ?)");
@@ -47,9 +53,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["agregar_mecanico"])) {
     $especialidad = isset($_POST["especialidad"]) ? $_POST["especialidad"] : '';
 
     if (agregarMecanico($cedula, $nombre, $apellido, $edad, $licencia, $especialidad)) {
-        echo "Mecánico agregado con éxito.";
+        echo "<script>alert('Mecánico agregado con éxito.');</script>";
     } else {
-        echo "Error al agregar el mecánico.";
+        echo "<script>alert('Error al agregar el mecánico.');</script>";
     }
 }
 
@@ -58,9 +64,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["eliminar_mecanico"])) 
     $cedula = $_POST["cedula"];
 
     if (eliminarMecanico($cedula)) {
-        echo "Mecánico eliminado con éxito.";
+        echo "<script>alert('Mecánico eliminado con éxito.');</script>";
     } else {
-        echo "Error al eliminar el mecánico.";
+        echo "<script>alert('Error al eliminar el mecánico.');</script>";
     }
 }
 
@@ -74,9 +80,23 @@ $mecanicos = obtenerMecanicos();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iCar Plus - Mecánicos</title>
-    <!-- Incluye los archivos CSS de Materialize -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!-- Agrega tus propios estilos si es necesario -->
+
+    <style>
+        body{
+      background-color: ghostwhite;
+
+      table, thead, tr{
+            border: 1px solid black; 
+        }
+
+        .text-center {
+        text-align: center;
+        }
+    }
+
+    </style>
 </head>
 <body>
 
@@ -101,7 +121,7 @@ $mecanicos = obtenerMecanicos();
                     <span class="card-title">Agregar Mecánico</span>
                     <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
                         <div class="input-field">
-                            <input id="cedula" type="text" name="cedula" required>
+                            <input id="cedula" type="number" name="cedula" required>
                             <label for="cedula">Cedula</label>
                         </div>
                         <div class="input-field">
@@ -113,12 +133,12 @@ $mecanicos = obtenerMecanicos();
                             <label for="apellido">Apellido</label>
                         </div>
                         <div class="input-field">
-                            <input id="edad" type="number" name="edad" required>
+                            <input id="edad" type="number" name="edad" min="18" max="75" required>
                             <label for="edad">Edad</label>
                         </div>
                         <div class="input-field">
-                            <input id="licencia" type="text" name="licencia" required>
-                            <label for="licencia">Licencia</label>
+                            <input id="licencia" type="number" name="licencia" min="0" max="9999999999999" required>
+                            <label for="licencia">Licencia (máx. 13 dígitos)</label>
                         </div>
                         <div class="input-field">
                             <input id="especialidad" type="text" name="especialidad" required>
@@ -134,17 +154,19 @@ $mecanicos = obtenerMecanicos();
     <!-- Lista de mecánicos -->
     <div class="row">
         <div class="col s12">
+        <div class="right">
+        <a href="fpdf\reporteM.php"target="_blank"><i class="material-icons left">picture_as_pdf</i>Reporte PDF</a><hr>
+        </div>
         <table class="striped">
                 <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Cedula</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Edad</th>
-                    <th>Licencia</th>
-                    <th>Especialidad</th>
-                    <th>Acciones</th>
+                    <th class='text-center'>#</th>
+                    <th class='text-center'>Cedula</th>
+                    <th class='text-center'>Nombre</th>
+                    <th class='text-center'>Apellido</th>
+                    <th class='text-center'>Edad</th>
+                    <th class='text-center'>Licencia</th>
+                    <th class='text-center'>Especialidad</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -187,6 +209,6 @@ $mecanicos = obtenerMecanicos();
 <!-- Incluye los archivos JavaScript de Materialize -->
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-<!-- Agrega tus propios scripts si es necesario -->
+<script src="assets/js/init.js"></script>
 </body>
 </html>

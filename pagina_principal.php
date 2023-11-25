@@ -1,3 +1,13 @@
+<?php
+session_start();
+
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+  header("Location: index.php");
+  exit;
+}
+include('conexion.php');
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -144,11 +154,11 @@
                 <p>Copyright © 2023 rubilopez.site</p>
               </div>
               <div></div>
-              <a class="center" href="https://github.com/Fullsun15/Practica4.git" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" width="30px" height="30px"></a>
+              <a class="center" href="https://github.com/Fullsun15/Practica5.git" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" width="30px" height="30px"></a>
         </div>
     </footer>
 
-
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script src="assets\js\init.js" ></script>
   <script>

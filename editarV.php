@@ -1,6 +1,12 @@
 <?php
-include('conexion.php');
+session_start();
 
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+include('conexion.php');
 // Función para obtener la información de un vehículo por matrícula
 function obtenerVehiculoPorMatricula($matricula) {
     global $conn;
@@ -54,23 +60,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["actualizar_vehiculo"])
         $check = getimagesize($_FILES["imagen"]["tmp_name"]);
         if ($check !== false) {
             // Permitir solo ciertos formatos de archivo
-            if ($imageFileType == "jpg" || $imageFileType == "png" || $imageFileType == "jpeg" || $imageFileType == "gif") {
+            if ($imageFileType == "jpg" || $imageFileType == "png" || $imageFileType == "jpeg" ) {
                 $imagen = $target_file;
                 move_uploaded_file($_FILES["imagen"]["tmp_name"], $target_file);
             } else {
-                echo "Lo siento, solo se permiten archivos JPG, JPEG, PNG y GIF.";
+                echo "<script>alert('Lo siento, solo se permiten archivos JPG, JPEG y PNG');</script>";
             }
         } else {
-            echo "El archivo no es una imagen válida.";
+            echo "<script>alert('El archivo no es una imagen válida.');</script>";
         }
     }
 
     if (actualizarVehiculo($matricula, $marca, $modelo, $tipo, $ano, $clasificacion, $descripcion, $imagen)) {
-        echo "Vehículo actualizado con éxito.";
+        echo "<script>alert('Vehículo actualizado con éxito.');</script>";
         header("Location: vehiculos.php");
         exit();
     } else {
-        echo "Error al actualizar el vehículo: " . $conn->error;
+        echo "<script>alert('Error al actualizar el vehículo: ');</script>" . $conn->error;
     }
 }
 ?>
@@ -81,9 +87,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["actualizar_vehiculo"])
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iCar Plus - Editar Vehículo</title>
-    <!-- Incluye los archivos CSS de Materialize -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!-- Agrega tus propios estilos si es necesario -->
+
+    <style>
+        body{
+      background-color: ghostwhite;
+    }
+
+    </style>
 </head>
 <body>
 
@@ -170,6 +182,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["actualizar_vehiculo"])
     </div>
 </div>
 
+<div class="container" >
+    <div class="left">
+             <a href="vehiculos.php"><i class="material-icons left">arrow_back</i>Regresar</a><hr>
+         </div>
+</div>
 <!-- Incluye los archivos JavaScript de Materialize -->
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>

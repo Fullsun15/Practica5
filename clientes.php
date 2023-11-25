@@ -1,7 +1,12 @@
 <?php
+session_start();
 
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+  header("Location: index.php");
+  exit;
+}
 include('conexion.php');
-
 function agregarCliente($cedula, $nombre, $apellido, $edad, $licencia) {
     global $conn;
     $stmt = $conn->prepare("INSERT INTO clientes_icarplus (cedula, nombre, apellido, edad, licencia) VALUES (?, ?, ?, ?, ?)");
@@ -47,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["agregar_cliente"])) {
     if (agregarCliente($cedula, $nombre, $apellido, $edad, $licencia)) {
         echo "<script>alert('Cliente agregado con éxito');</script>";
     } else {
-        echo "Error al agregar el cliente.";
+        echo "<script>alert('Error al agregar el cliente.');</script>";
     }
 }
 
@@ -55,9 +60,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["eliminar_cliente"])) {
     $cedula = $_POST["cedula"];
 
     if (eliminarCliente($cedula)) {
-        echo "Cliente eliminado con éxito.";
+        echo "<script>alert('Cliente eliminado con éxito.');</script>";
     } else {
-        echo "Error al eliminar el cliente.";
+        echo "<script>alert('Error al eliminar el cliente.');</script>";
     }
 }
 
@@ -70,11 +75,20 @@ $clientes = obtenerClientes();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iCar Plus - Clientes</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 
     <style>
-            body{
+        body{
       background-color: ghostwhite;
+
+      table, thead, tr{
+            border: 1px solid black; 
+        }
+
+        .text-center {
+        text-align: center;
+        }
     }
 
     </style>
@@ -101,7 +115,7 @@ $clientes = obtenerClientes();
                     <span class="card-title">Agregar Cliente</span>
                     <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
                         <div class="input-field">
-                            <input id="cedula" type="text" name="cedula" required>
+                            <input id="cedula" type="number" name="cedula" required>
                             <label for="cedula">Cedula</label>
                         </div>
                         <div class="input-field">
@@ -113,12 +127,12 @@ $clientes = obtenerClientes();
                             <label for="apellido">Apellido</label>
                         </div>
                         <div class="input-field">
-                            <input id="edad" type="number" name="edad" required>
+                            <input id="edad" type="number" name="edad" min="18" max="99" required>
                             <label for="edad">Edad</label>
                         </div>
                         <div class="input-field">
-                            <input id="licencia" type="text" name="licencia" required>
-                            <label for="licencia">Licencia</label>
+                            <input id="licencia" type="number" name="licencia" min="0" max="9999999999999" required>
+                            <label for="licencia">Campo Numérico (máx. 13 dígitos)</label>
                         </div>
                         <button class="btn waves-effect waves-light" type="submit" name="agregar_cliente">Agregar
                             Cliente
@@ -130,17 +144,19 @@ $clientes = obtenerClientes();
     </div>
 
     <div class="row">
-        <div class="col s12 l12">
+        <div class="col s12 l12"><br>
+        <div class="right">
+        <a href="fpdf\reporteC.php"target="_blank"><i class="material-icons left">picture_as_pdf</i>Reporte PDF</a><hr>
+        </div>
         <table class="striped">
                 <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Cedula</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Edad</th>
-                    <th>Licencia</th>
-                    <th>Acciones</th>
+                    <th class="text-center">#</th>
+                    <th class="text-center">Cedula</th>
+                    <th class="text-center">Nombre</th>
+                    <th class="text-center">Apellido</th>
+                    <th class="text-center">Edad</th>
+                    <th class="text-center">Licencia</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -190,5 +206,6 @@ $clientes = obtenerClientes();
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="assets/js/init.js"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ require('fpdf.php'); // Reemplaza la ruta por la correcta si es diferente
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "botellones";
+$dbname = "bd";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 

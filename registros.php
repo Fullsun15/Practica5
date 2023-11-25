@@ -1,6 +1,12 @@
 <?php
-include('conexion.php');
+session_start();
 
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+include('conexion.php');
 // Establecer la zona horaria
 date_default_timezone_set('America/Caracas');
 
@@ -20,16 +26,67 @@ function obtenerRegistroPorId($id) {
     return $stmt->get_result()->fetch_assoc();
 }
 
+// Función para verificar si la matrícula existe
+function matriculaExiste($matricula) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM vehiculos_icarplus WHERE matricula = ?");
+    $stmt->bind_param("s", $matricula);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['count'] > 0;
+}
+
+// Función para verificar si la cédula del mecánico existe
+function cedulaMecanicoExiste($cedula) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM mecanicos_icarplus WHERE cedula = ?");
+    $stmt->bind_param("i", $cedula);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['count'] > 0;
+}
+
+// Función para verificar si el serial del repuesto existe
+function serialRepuestoExiste($serial) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM repuestos_icarplus WHERE serial = ?");
+    $stmt->bind_param("s", $serial);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['count'] > 0;
+}
+
 // Función para insertar un nuevo registro
 function insertarRegistro($matricula_vehiculos, $cedula_mecanicos, $serial_repuestos, $cantidad_repuestos, $fecha_ingreso) {
     global $conn;
+
+    // Verificar si la matrícula, cédula y serial existen en la base de datos
+    if (!matriculaExiste($matricula_vehiculos)) {
+        echo "<script>alert('Error: La matrícula no existe en la base de datos.');</script>";
+        return;
+    }
+
+    if (!cedulaMecanicoExiste($cedula_mecanicos)) {
+        echo "<script>alert('Error: La cédula del mecánico no existe en la base de datos.');</script>";
+        return;
+    }
+
+    if (!serialRepuestoExiste($serial_repuestos)) {
+        echo "<script>alert('Error: El serial del repuesto no existe en la base de datos.');</script>";
+        return;
+    }
+
+    // Insertar el nuevo registro
     $stmt = $conn->prepare("INSERT INTO registros_icarplus (matricula_vehiculos, cedula_mecanicos, serial_repuestos, cantidad_repuestos, fecha_ingreso) VALUES (?, ?, ?, ?, ?)");
     $stmt->bind_param("sssss", $matricula_vehiculos, $cedula_mecanicos, $serial_repuestos, $cantidad_repuestos, $fecha_ingreso);
     
     if ($stmt->execute()) {
-        return true;
+        echo "<script>alert('Registro insertado con éxito.');</script>";
     } else {
-        return false;
+        echo "<script>alert('Error al insertar el registro: ');</script>" . $stmt->error;
     }
 }
 
@@ -40,9 +97,9 @@ function actualizarRegistro($id, $matricula_vehiculos, $cedula_mecanicos, $seria
     $stmt->bind_param("ssssi", $matricula_vehiculos, $cedula_mecanicos, $serial_repuestos, $cantidad_repuestos, $id);
     
     if ($stmt->execute()) {
-        return true;
+        echo "Registro actualizado con éxito.";
     } else {
-        return false;
+        echo "Error al actualizar el registro: " . $stmt->error;
     }
 }
 
@@ -53,9 +110,9 @@ function eliminarRegistro($id) {
     $stmt->bind_param("i", $id);
     
     if ($stmt->execute()) {
-        return true;
+        echo "Registro eliminado con éxito.";
     } else {
-        return false;
+        echo "Error al eliminar el registro: " . $stmt->error;
     }
 }
 
@@ -67,11 +124,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["registrar"])) {
     $cantidad_repuestos = $_POST["cantidad_repuestos"];
     $fecha_ingreso = date('Y-m-d H:i:s');
 
-    if (insertarRegistro($matricula_vehiculos, $cedula_mecanicos, $serial_repuestos, $cantidad_repuestos, $fecha_ingreso)) {
-        echo "Registro insertado con éxito.";
-    } else {
-        echo "Error al insertar el registro: " . $conn->error;
-    }
+    insertarRegistro($matricula_vehiculos, $cedula_mecanicos, $serial_repuestos, $cantidad_repuestos, $fecha_ingreso);
 }
 
 // Procesamiento del formulario de edición
@@ -82,22 +135,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["editar_registro"])) {
     $serial_repuestosEditar = $_POST["serial_repuestos"];
     $cantidad_repuestosEditar = $_POST["cantidad_repuestos"];
 
-    if (actualizarRegistro($idEditar, $matricula_vehiculosEditar, $cedula_mecanicosEditar, $serial_repuestosEditar, $cantidad_repuestosEditar)) {
-        echo "Registro actualizado con éxito.";
-    } else {
-        echo "Error al actualizar el registro: " . $conn->error;
-    }
+    actualizarRegistro($idEditar, $matricula_vehiculosEditar, $cedula_mecanicosEditar, $serial_repuestosEditar, $cantidad_repuestosEditar);
 }
 
 // Procesamiento del formulario de eliminación
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["eliminar_registro"])) {
     $idEliminar = $_POST["id_eliminar"];
-
-    if (eliminarRegistro($idEliminar)) {
-        echo "Registro eliminado con éxito.";
-    } else {
-        echo "Error al eliminar el registro: " . $conn->error;
-    }
+    eliminarRegistro($idEliminar);
 }
 
 function getVerEnlace($id) {
@@ -111,9 +155,15 @@ function getVerEnlace($id) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iCar Plus - Registros</title>
-    <!-- Incluye los archivos CSS de Materialize -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!-- Agrega tus propios estilos si es necesario -->
+
+    <style>
+        body{
+      background-color: ghostwhite;
+    }
+
+    </style>
 </head>
 <body>
 
@@ -138,15 +188,15 @@ function getVerEnlace($id) {
                     <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
                         <div class="input-field">
                             <input id="matricula_vehiculos" type="text" name="matricula_vehiculos" required>
-                            <label for="matricula_vehiculos">Matrícula Vehículo</label>
+                            <label for="matricula_vehiculos">Matrícula Vehículo (Existente)</label>
                         </div>
                         <div class="input-field">
                             <input id="cedula_mecanicos" type="text" name="cedula_mecanicos" required>
-                            <label for="cedula_mecanicos">Cédula Mecánico</label>
+                            <label for="cedula_mecanicos">Cédula Mecánico (Existente)</label>
                         </div>
                         <div class="input-field">
                             <input id="serial_repuestos" type="text" name="serial_repuestos" required>
-                            <label for="serial_repuestos">Serial Repuestos</label>
+                            <label for="serial_repuestos">Serial Repuestos (Existente)</label>
                         </div>
                         <div class="input-field">
                             <input id="cantidad_repuestos" type="number" name="cantidad_repuestos" required>
@@ -183,13 +233,6 @@ function getVerEnlace($id) {
                         echo "<td>{$registro['serial_repuestos']}</td>";
                         echo "<td>{$registro['cantidad_repuestos']}</td>";
                         echo "<td>{$registro['fecha_ingreso']}</td>";
-                       /* echo "<td>
-                                <a class='btn waves-effect waves-light ' href='editar_registro.php?id={$registro['id']}'>Editar</a></td>";
-                        echo "<td>
-                                <form style='display:inline;' method='post' action='{$_SERVER['PHP_SELF']}'>
-                                    <input type='hidden' name='id_eliminar' value='{$registro['id']}'>
-                                    <button type='submit' class='btn red waves-effect waves-light' name='eliminar_registro'>Eliminar</button>
-                                </form></td>";*/
                         echo "<td>
                                 <a class='waves-effect waves-light btn' href='" . getVerEnlace($registro['id']) . "'>Ver</a></td>";
                         echo "</tr>";

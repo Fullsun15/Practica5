@@ -1,4 +1,11 @@
 <?php
+session_start();
+
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+  header("Location: index.php");
+  exit;
+}
 include('conexion.php');
 
 function obtenerClientePorCedula($cedula) {
@@ -25,11 +32,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["editar_cliente"])) {
     $licencia = isset($_POST["licencia"]) ? $_POST["licencia"] : '';
 
     if (editarCliente($cedula, $nuevaCedula, $nombre, $apellido, $edad, $licencia)) {
-        echo "Cliente editado con éxito.";
+        echo "<script>alert('Cliente editado con éxito.');</script>";
         header("Location: clientes.php");
         exit();
     } else {
-        echo "Error al editar el cliente.";
+        echo "<script>alert('Error al editar el cliente.');</script>";
     }
 }
 
@@ -46,12 +53,29 @@ if (isset($_GET['cedula'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iCar Plus - Editar Cliente</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <style>
+        body{
+      background-color: ghostwhite;
+    }
+
+    </style>
 </head>
 <body>
 
+<nav class="red darken-2">
+    <div class="nav-wrapper container">
+      <a href="#" class="brand-logo left">iCar Plus</a>
+      <ul id="nav-mobile" class="right">
+        <li><a href="pagina_principal.php">Inicio</a></li>
+        <li><a href="cerrar_sesion.php">Cerrar Sesión</a></li>
+      </ul>
+    </div>
+  </nav>
+
 <div class="container">
-    <h3 class="center-align">Editar Cliente</h3>
+    <h3 class="center-align card-panel blue lighten-2">Editar Cliente</h3>
 
     <div class="row">
         <div class="col l8 s12 m6 offset-l2">
@@ -85,10 +109,14 @@ if (isset($_GET['cedula'])) {
             </div>
         </div>
     </div>
+    <div class="left">
+         <a href="clientes.php"><i class="material-icons left">arrow_back</i>Regresar</a><hr>
+     </div>
 
 </div>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="assets/js/init.js"></script>
 </body>
 </html>

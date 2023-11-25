@@ -1,6 +1,12 @@
 <?php
-include('conexion.php');
+session_start();
 
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+include('conexion.php');
 // Funciones de manejo de vehículos
 function agregarVehiculo($matricula, $marca, $modelo, $tipo, $ano, $clasificacion, $descripcion, $imagen, $cedulaCliente) {
     global $conn;
@@ -17,15 +23,15 @@ function agregarVehiculo($matricula, $marca, $modelo, $tipo, $ano, $clasificacio
         $stmt->bind_param("ssssissss", $matricula, $marca, $modelo, $tipo, $ano, $clasificacion, $descripcion, $imagen, $cedulaCliente);
 
         if ($stmt->execute()) {
-            echo "Vehículo registrado con éxito.";
+            echo "<script>alert('Vehículo registrado con éxito.');</script>";
             return true;
         } else {
-            echo "Error al registrar el vehículo: " . $conn->error;
+            echo "<script>alert('Error al registrar el vehículo: ');</script>" . $conn->error;
             return false;
         }
     } else {
         // La cédula del cliente no existe, mostrar mensaje de error
-        echo "La cédula del cliente no existe en el sistema. Por favor, verifique.";
+        echo "<script>alert('La cédula del cliente no existe en el sistema. Por favor, verifique.');</script>";
         return false;
     }
 }
@@ -62,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["agregar_vehiculo"])) {
     $imagen = "img_Vehi/default.jpg"; // Imagen por defecto
 
     if (isset($_FILES["imagen"]) && $_FILES["imagen"]["error"] == 0) {
-        $target_dir = "img_Vehi/";
+        $target_dir = "img_Vehi";
         $target_file = $target_dir . basename($_FILES["imagen"]["name"]);
         $uploadOk = 1;
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
@@ -104,9 +110,15 @@ $vehiculos = obtenerVehiculos();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iCar Plus - Vehículos</title>
-    <!-- Incluye los archivos CSS de Materialize -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!-- Agrega tus propios estilos si es necesario -->
+
+    <style>
+        body{
+      background-color: ghostwhite;
+    }
+
+    </style>
 </head>
 <body>
 
@@ -128,7 +140,6 @@ $vehiculos = obtenerVehiculos();
         <div class="col l12 s12 m6">
             <div class="card">
                 <div class="card-content">
-                    <span class="card-title">Agregar Vehículo</span>
                     <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" enctype="multipart/form-data">
                         <div class="input-field">
                             <input id="matricula" type="text" name="matricula" required>
@@ -171,7 +182,7 @@ $vehiculos = obtenerVehiculos();
                             <label for="clasificacion">Clasificación</label>
                         </div>
                         <div class="input-field">
-                            <input id="descripcion" type="text" name="descripcion" required>
+                            <textarea id="descripcion" name="descripcion" class="materialize-textarea" required></textarea>
                             <label for="descripcion">Descripción</label>
                         </div>
                         <div class="file-field input-field">
@@ -198,6 +209,12 @@ $vehiculos = obtenerVehiculos();
 </div>
 <!-- Lista de vehículos -->
 <div class="row">
+    <div class="container" >
+
+        <div class="right">
+        <a href="fpdf\reporteV.php"target="_blank"><i class="material-icons left">picture_as_pdf</i>Reporte PDF</a><hr>
+        </div>
+    </div>
     <div class="col s12">
         <table class="striped">
             <thead>

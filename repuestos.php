@@ -1,6 +1,12 @@
 <?php
-include('conexion.php');
+session_start();
 
+// Verificar si el usuario ha iniciado sesión. Si no, redirigirlo al formulario de inicio de sesión.
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+include('conexion.php');
 // Funciones de manejo de repuestos
 function agregarRepuesto($serial, $marca, $nombre, $cantidad, $imagen) {
     global $conn;
@@ -43,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["agregar_repuesto"])) {
     $imagen = "img/default.jpg"; // Establece una imagen por defecto si no se proporciona ninguna
 
     if (isset($_FILES["imagen"]) && $_FILES["imagen"]["error"] == 0) {
-        $target_dir = "img/";
+        $target_dir = "img_Vehi";
         $target_file = $target_dir . basename($_FILES["imagen"]["name"]);
         $uploadOk = 1;
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
@@ -52,22 +58,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["agregar_repuesto"])) {
         $check = getimagesize($_FILES["imagen"]["tmp_name"]);
         if ($check !== false) {
             // Permitir solo ciertos formatos de archivo
-            if ($imageFileType == "jpg" || $imageFileType == "png" || $imageFileType == "jpeg" || $imageFileType == "gif") {
+            if ($imageFileType == "jpg" || $imageFileType == "png" || $imageFileType == "jpeg") {
                 $imagen = $target_file;
                 move_uploaded_file($_FILES["imagen"]["tmp_name"], $target_file);
             } else {
-                echo "Lo siento, solo se permiten archivos JPG, JPEG, PNG y GIF.";
+                echo "<script>alert('Lo siento, solo se permiten archivos JPG, JPEG y PNG.');</script>";
             }
         } else {
-            echo "El archivo no es una imagen válida.";
+            echo "<script>alert('El archivo no es una imagen válida.');</script>";
         }
     }
 
     // Agregar el nuevo repuesto
     if (agregarRepuesto($serial, $marca, $nombre, $cantidad, $imagen)) {
-        echo "Repuesto agregado con éxito.";
+        echo "<script>alert('Repuesto agregado con éxito.');</script>";
     } else {
-        echo "Error al agregar el repuesto: " . $conn->error;
+        echo "<script>alert('Error al agregar el repuesto: ');</script>" . $conn->error;
     }
 }
 
@@ -77,9 +83,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["eliminar_repuesto"])) 
     $serialEliminar = $_POST["serial"];
 
     if (eliminarRepuesto($serialEliminar)) {
-        echo "Repuesto eliminado con éxito.";
+        echo "<script>alert('Repuesto eliminado con éxito.');</script>";
     } else {
-        echo "Error al eliminar el repuesto: " . $conn->error;
+        echo "<script>alert('Error al eliminar el repuesto: ');</script>" . $conn->error;
     }
 }
 
@@ -93,9 +99,24 @@ $repuestos = obtenerRepuestos();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iCar Plus - Repuestos</title>
-    <!-- Incluye los archivos CSS de Materialize -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!-- Agrega tus propios estilos si es necesario -->
+
+    <style>
+        body{
+      background-color: ghostwhite;
+
+      table, thead, tr{
+            border: 1px solid black; 
+        }
+
+        .text-center {
+        text-align: center;
+
+        }
+    }
+
+    </style>
 </head>
 <body>
 
@@ -154,15 +175,18 @@ $repuestos = obtenerRepuestos();
     <!-- Lista de repuestos -->
     <div class="row">
         <div class="col s12">
+        <div class="right">
+        <a href="fpdf\reporteR.php"target="_blank"><i class="material-icons left">picture_as_pdf</i>Reporte PDF</a><hr>
+        </div>
             <table class="striped">
                 <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Serial</th>
-                    <th>Marca</th>
-                    <th>Nombre</th>
-                    <th>Cantidad</th>
-                    <th>Imagen</th>
+                    <th class='text-center'>#</th>
+                    <th class='text-center'>Serial</th>
+                    <th class='text-center'>Marca</th>
+                    <th class='text-center'>Nombre</th>
+                    <th class='text-center'>Cantidad</th>
+                    <th class=''>Imagen</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -175,7 +199,7 @@ $repuestos = obtenerRepuestos();
                     echo "<td class='text-center'>" . $repuesto['marca'] . "</td>";
                     echo "<td class='text-center'>" . $repuesto['nombre'] . "</td>";
                     echo "<td class='text-center'>" . $repuesto['cantidad'] . "</td>";
-                    echo "<td class='text-center'><img class='materialboxed' src='" . $repuesto['imagen'] . "' alt='Imagen de repuesto' style='max-width: 100px; max-height: 100px;'></td>";
+                    echo "<td class=''><img class='materialboxed center' src='" . $repuesto['imagen'] . "' alt='Imagen de repuesto' style='max-width: 100px; max-height: 100px;'></td>";
                     echo "<td class='text-center'>
                             <form action='editarR.php' method='get'>
                                 <input type='hidden' name='serial' value='" . $repuesto['serial'] . "'>
@@ -204,6 +228,7 @@ $repuestos = obtenerRepuestos();
 <!-- Incluye los archivos JavaScript de Materialize -->
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="assets/js/init.js"></script>
 <script>
 
     document.addEventListener('DOMContentLoaded', function() {
